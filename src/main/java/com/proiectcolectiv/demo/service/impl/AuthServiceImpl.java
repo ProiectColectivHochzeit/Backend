@@ -3,6 +3,7 @@ package com.proiectcolectiv.demo.service.impl;
 import com.proiectcolectiv.demo.dto.auth.SignInRequest;
 import com.proiectcolectiv.demo.dto.auth.SignInResponse;
 import com.proiectcolectiv.demo.dto.user.UserDTO;
+import com.proiectcolectiv.demo.exception.auth.InvalidPasswordException;
 import com.proiectcolectiv.demo.mapper.UserMapper;
 import com.proiectcolectiv.demo.model.User;
 import com.proiectcolectiv.demo.repository.UserRepository;
@@ -30,7 +31,7 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
 
 
-    public SignInResponse signIn(SignInRequest signInRequest) {
+    public SignInResponse signIn(SignInRequest signInRequest) throws InvalidPasswordException {
         log.info("Signing in user with email: {}", signInRequest.getEmail());
         Optional<User> user = userRepository.findByEmail(signInRequest.getEmail());
         if (user.isEmpty()) {
@@ -38,7 +39,7 @@ public class AuthServiceImpl implements AuthService {
         }
         User foundUser = user.get();
         if (!passwordEncoder.matches(signInRequest.getPassword(), foundUser.getPassword())) {
-            throw new RuntimeException("Invalid password");
+            throw new InvalidPasswordException();
         }
 
         String token = generateToken(foundUser);

@@ -5,6 +5,7 @@ import com.proiectcolectiv.demo.dto.auth.SignInRequest;
 import com.proiectcolectiv.demo.dto.auth.SignInResponse;
 import com.proiectcolectiv.demo.dto.user.UserDTO;
 import com.proiectcolectiv.demo.dto.user.UserResponseDTO;
+import com.proiectcolectiv.demo.exception.auth.InvalidPasswordException;
 import com.proiectcolectiv.demo.mapper.UserMapper;
 import com.proiectcolectiv.demo.model.User;
 import com.proiectcolectiv.demo.service.AuthService;
@@ -27,11 +28,11 @@ public class AuthController {
     /**
      * Handles user sign-in requests.
      * @param signInRequest the sign-in request containing email and password
-     *
+     * throws InvalidPasswordException if the password is invalid
      * @return a response entity containing the sign-in response
      */
     @PostMapping("/sign-in")
-    public ResponseEntity<SignInResponse> signIn(@RequestBody SignInRequest signInRequest) {
+    public ResponseEntity<SignInResponse> signIn(@RequestBody SignInRequest signInRequest) throws InvalidPasswordException {
         return ResponseEntity.ok(authService.signIn(signInRequest));
     }
 
