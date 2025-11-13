@@ -1,7 +1,5 @@
 package com.proiectcolectiv.demo.dto.user;
 
-import com.proiectcolectiv.demo.model.enums.Role;
-import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
@@ -21,6 +19,4 @@ public class UserDTO {
 
     private String password;
 
-    @Enumerated
-    private Role role;
 }

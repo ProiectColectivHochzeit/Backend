@@ -6,6 +6,8 @@ import com.proiectcolectiv.demo.dto.auth.SignInResponse;
 import com.proiectcolectiv.demo.dto.user.UserDTO;
 import com.proiectcolectiv.demo.dto.user.UserResponseDTO;
 import com.proiectcolectiv.demo.exception.auth.InvalidPasswordException;
+import com.proiectcolectiv.demo.exception.user.DuplicateUserException;
+import com.proiectcolectiv.demo.exception.user.UserNotFoundException;
 import com.proiectcolectiv.demo.mapper.UserMapper;
 import com.proiectcolectiv.demo.model.User;
 import com.proiectcolectiv.demo.service.AuthService;
@@ -32,7 +34,7 @@ public class AuthController {
      * @return a response entity containing the sign-in response
      */
     @PostMapping("/sign-in")
-    public ResponseEntity<SignInResponse> signIn(@RequestBody SignInRequest signInRequest) throws InvalidPasswordException {
+    public ResponseEntity<SignInResponse> signIn(@RequestBody SignInRequest signInRequest) throws InvalidPasswordException, UserNotFoundException {
         return ResponseEntity.ok(authService.signIn(signInRequest));
     }
 
@@ -42,7 +44,7 @@ public class AuthController {
      * @return a response entity containing the registered user's response DTO
      */
     @PostMapping("/register")
-    public ResponseEntity<UserResponseDTO> register(@Valid @RequestBody UserDTO newUser){
+    public ResponseEntity<UserResponseDTO> register(@Valid @RequestBody UserDTO newUser) throws DuplicateUserException {
         User registeredUser = authService.registerUser(newUser);
         UserResponseDTO userResponse = userMapper.userToUserResponseDTO(registeredUser);
         return ResponseEntity.ok(userResponse);

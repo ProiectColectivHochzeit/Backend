@@ -1,7 +1,6 @@
 package com.proiectcolectiv.demo.model;
 
 
-import com.proiectcolectiv.demo.model.enums.Role;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -41,10 +40,4 @@ public class User {
     @Column(nullable = false)
     @NotBlank(message = "Password is required")
     private String password;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private Role role;
-
-
 }
