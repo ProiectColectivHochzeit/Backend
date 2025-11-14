@@ -4,6 +4,9 @@ import com.proiectcolectiv.demo.dto.auth.SignInRequest;
 import com.proiectcolectiv.demo.dto.auth.SignInResponse;
 import com.proiectcolectiv.demo.dto.user.UserDTO;
 import com.proiectcolectiv.demo.exception.auth.InvalidPasswordException;
+import com.proiectcolectiv.demo.exception.auth.InvalidTokenException;
+import com.proiectcolectiv.demo.exception.user.DuplicateUserException;
+import com.proiectcolectiv.demo.exception.user.UserNotFoundException;
 import com.proiectcolectiv.demo.mapper.UserMapper;
 import com.proiectcolectiv.demo.model.User;
 import com.proiectcolectiv.demo.repository.UserRepository;
@@ -31,11 +34,11 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
 
 
-    public SignInResponse signIn(SignInRequest signInRequest) throws InvalidPasswordException {
+    public SignInResponse signIn(SignInRequest signInRequest) throws UserNotFoundException, InvalidPasswordException {
         log.info("Signing in user with email: {}", signInRequest.getEmail());
         Optional<User> user = userRepository.findByEmail(signInRequest.getEmail());
         if (user.isEmpty()) {
-            throw new RuntimeException("User not found");
+            throw new UserNotFoundException();
         }
         User foundUser = user.get();
         if (!passwordEncoder.matches(signInRequest.getPassword(), foundUser.getPassword())) {
@@ -48,28 +51,28 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public User registerUser(UserDTO userDTO) {
+    public User registerUser(UserDTO userDTO) throws DuplicateUserException {
         log.info("Registering user with email: {}", userDTO.getEmail());
         if (userRepository.existsByEmail(userDTO.getEmail())) {
-            throw new RuntimeException("Email already in use");
+            throw new DuplicateUserException();
         }
 
         User newUser = userMapper.userDTOToUser(userDTO);
         newUser.setPassword(passwordEncoder.encode(userDTO.getPassword()));
         newUser.setEmail(userDTO.getEmail());
-
+        log.info("User registered with email: {}", newUser.getEmail());
         return userRepository.save(newUser);
 
     }
 
     @Override
-    public boolean validateToken(String token) {
+    public boolean validateToken(String token) throws InvalidTokenException {
         try {
             Jwts.parserBuilder().setSigningKey(jwtSecret).build().parseClaimsJws(token);
             return true;
         } catch (Exception e) {
             log.error("Invalid token: {}", e.getMessage());
-            throw new RuntimeException("Invalid token");
+            throw new InvalidTokenException();
         }
     }
 
@@ -82,7 +85,6 @@ public class AuthServiceImpl implements AuthService {
         return Jwts.builder()
                 .setSubject(user.getId().toString())
                 .claim("email", user.getEmail())
-                .claim("role", user.getRole().name())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + 3600000))
                 .signWith(jwtSecret)
