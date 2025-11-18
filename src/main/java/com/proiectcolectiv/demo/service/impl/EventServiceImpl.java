@@ -56,4 +56,12 @@ public class EventServiceImpl implements EventService {
         return eventRepository.findAllById(participatedEventIds);
     }
 
+    @Override
+    public Event createEvent(Event event) {
+        if (event == null) {
+            throw new IllegalArgumentException("event must not be null");
+        }
+        return eventRepository.save(event);
+    }
+
 }

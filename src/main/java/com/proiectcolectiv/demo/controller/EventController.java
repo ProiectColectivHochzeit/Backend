@@ -31,4 +31,11 @@ public class EventController {
 
         return ResponseEntity.ok(eventResponseDTOs);
     }
+
+    @PostMapping
+    public ResponseEntity<EventResponseDTO> createEvent(@RequestBody Event event) {
+        Event created = eventService.createEvent(event);
+        EventResponseDTO dto = eventMapper.eventToEventResponseDTO(created);
+        return ResponseEntity.status(org.springframework.http.HttpStatus.CREATED).body(dto);
+    }
 }
