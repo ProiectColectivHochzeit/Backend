@@ -1,6 +1,7 @@
 package com.proiectcolectiv.demo.controller;
 
 
+import com.proiectcolectiv.demo.dto.auth.ResetPasswordRequest;
 import com.proiectcolectiv.demo.dto.auth.SignInRequest;
 import com.proiectcolectiv.demo.dto.auth.SignInResponse;
 import com.proiectcolectiv.demo.dto.user.UserDTO;
@@ -14,10 +15,7 @@ import com.proiectcolectiv.demo.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -50,4 +48,12 @@ public class AuthController {
         return ResponseEntity.ok(userResponse);
     }
 
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(
+            @Valid @RequestBody ResetPasswordRequest request
+    ) throws UserNotFoundException {
+
+        authService.resetPassword(request.getEmail(), request.getNewPassword());
+        return ResponseEntity.ok("Password updated");
+    }
 }

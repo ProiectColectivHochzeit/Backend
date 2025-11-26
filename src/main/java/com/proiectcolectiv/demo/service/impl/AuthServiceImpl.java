@@ -91,4 +91,17 @@ public class AuthServiceImpl implements AuthService {
                 .compact();
 
     }
+
+    @Override
+    public void resetPassword(String email, String newPassword) throws UserNotFoundException {
+        log.info("Resetting password for user: {}", email);
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(UserNotFoundException::new);
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+
+        log.info("Password updated successfully for {}", email);
+    }
 }
