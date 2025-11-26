@@ -1,6 +1,8 @@
 package com.proiectcolectiv.demo.service;
 
 
+import com.proiectcolectiv.demo.dto.Event.EventRequestDTO;
+import com.proiectcolectiv.demo.dto.Event.EventResponseDTO;
 import com.proiectcolectiv.demo.exception.event.EventNotFoundException;
 import com.proiectcolectiv.demo.exception.eventOrganizer.EventOrganizerNotFoundException;
 import com.proiectcolectiv.demo.exception.eventParticipation.EventParticipationNotFound;
@@ -23,9 +25,9 @@ public interface EventService {
      *
      * Implementations should validate the provided {@code event} and persist it (for example via a repository).
      *
-     * @param event the Event to create; must not be {@code null}
+     * @param dto the Event to create; must not be {@code null}
      * @return the persisted Event instance, typically with generated fields populated (e.g. id)
      * @throws IllegalArgumentException if {@code event} is {@code null} or otherwise invalid
      */
-    public Event createEvent(Event event);
+    public EventResponseDTO createEvent(EventRequestDTO dto, String email);
 }

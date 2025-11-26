@@ -8,4 +8,5 @@ import java.util.UUID;
 
 public interface EventOrganizerService {
     List<EventOrganizer> getAllEventOrganizerByUserId(UUID userId) throws EventOrganizerNotFoundException;
+    EventOrganizer createEventOrganizer(EventOrganizer eventOrganizer);
 }

@@ -1,6 +1,7 @@
 package com.proiectcolectiv.demo.service.impl;
 
 import com.proiectcolectiv.demo.exception.eventParticipation.EventParticipationNotFound;
+import com.proiectcolectiv.demo.model.EventOrganizer;
 import com.proiectcolectiv.demo.model.EventParticipation;
 import com.proiectcolectiv.demo.repository.EventParticipationRepository;
 import com.proiectcolectiv.demo.service.EventParticipationService;
@@ -23,5 +24,10 @@ public class EventParticipationServiceImpl implements EventParticipationService 
             throw new EventParticipationNotFound();
         }
         return eventParticipationList;
+    }
+
+    @Override
+    public EventParticipation createEventParticipation(EventParticipation eventParticipation) {
+        return eventParticipationRepository.save(eventParticipation);
     }
 }

@@ -1,5 +1,6 @@
 package com.proiectcolectiv.demo.controller;
 
+import com.proiectcolectiv.demo.dto.Event.EventRequestDTO;
 import com.proiectcolectiv.demo.dto.Event.EventResponseDTO;
 import com.proiectcolectiv.demo.exception.event.EventNotFoundException;
 import com.proiectcolectiv.demo.exception.eventOrganizer.EventOrganizerNotFoundException;
@@ -8,7 +9,11 @@ import com.proiectcolectiv.demo.mapper.EventMapper;
 import com.proiectcolectiv.demo.model.Event;
 import com.proiectcolectiv.demo.service.EventService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -33,9 +38,13 @@ public class EventController {
     }
 
     @PostMapping
-    public ResponseEntity<EventResponseDTO> createEvent(@RequestBody Event event) {
-        Event created = eventService.createEvent(event);
-        EventResponseDTO dto = eventMapper.eventToEventResponseDTO(created);
-        return ResponseEntity.status(org.springframework.http.HttpStatus.CREATED).body(dto);
+    public ResponseEntity<EventResponseDTO> createEvent(@RequestBody EventRequestDTO request) {
+        String organizerID = request.getOrganizerID();
+        if (organizerID == null || organizerID.isBlank()) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        EventResponseDTO response = eventService.createEvent(request, organizerID);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 }

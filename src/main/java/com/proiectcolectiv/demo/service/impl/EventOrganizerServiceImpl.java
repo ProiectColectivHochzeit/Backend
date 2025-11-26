@@ -24,4 +24,9 @@ public class EventOrganizerServiceImpl implements EventOrganizerService {
         }
         return eventOrganizerList;
     }
+
+    @Override
+    public EventOrganizer createEventOrganizer(EventOrganizer eventOrganizer) {
+        return eventOrganizerRepository.save(eventOrganizer);
+    }
 }

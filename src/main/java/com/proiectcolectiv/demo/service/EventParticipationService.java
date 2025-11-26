@@ -14,4 +14,6 @@ public interface EventParticipationService {
      * @return List of EventParticipation objects associated with the specified user
      */
     List<EventParticipation> getAllEventParticipationByUserId(UUID userId) throws EventParticipationNotFound;
+
+    EventParticipation createEventParticipation(EventParticipation participation);
 }
