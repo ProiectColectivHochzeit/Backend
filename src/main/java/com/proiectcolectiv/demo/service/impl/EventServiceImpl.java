@@ -18,8 +18,6 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -33,23 +31,18 @@ public class EventServiceImpl implements EventService {
     private final EventParticipationService eventParticipationService;
     private final UserRepository userRepository;
 
-    public List<Event> getAllEventsByUserId(UUID userId) throws EventNotFoundException, EventOrganizerNotFoundException, EventParticipationNotFound {
-        List<Event> allUserRelatedEvents = Stream.concat(
+    public List<Event> getAllEventsByUserId(UUID userId) throws EventParticipationNotFound {
+        return Stream.concat(
                 getAllEventsOrganizedByUserId(userId).stream(),
                 getAllEventsParticipatedByUserId(userId).stream()
         ).toList();
-
-        return allUserRelatedEvents;
     }
 
-    public List<Event> getAllEventsOrganizedByUserId(UUID userId) throws EventNotFoundException, EventOrganizerNotFoundException {
+    public List<Event> getAllEventsOrganizedByUserId(UUID userId)  {
         List<UUID> organizedEventIds = new java.util.ArrayList<>(eventOrganizerService.getAllEventOrganizerByUserId(userId)
                 .stream()
                 .map(eventOrganizer -> eventOrganizer.getEvent().getId())
                 .toList());
-        if (organizedEventIds.isEmpty()) {
-            throw new EventNotFoundException();
-        }
 
         return eventRepository.findAllById(organizedEventIds);
     }
@@ -59,18 +52,21 @@ public class EventServiceImpl implements EventService {
                 .stream()
                 .map(eventParticipation -> eventParticipation.getEvent().getId())
                 .toList();
-        if (participatedEventIds.isEmpty()) {
-            throw new EventParticipationNotFound();
-        }
 
         return eventRepository.findAllById(participatedEventIds);
     }
 
     @Override
+    public Event getEventById(UUID eventId) throws EventNotFoundException {
+        return eventRepository.findById(eventId)
+                .orElseThrow(EventNotFoundException::new);
+    }
+
+    @Override
     @Transactional
-    public EventResponseDTO createEvent(EventRequestDTO dto, String email) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("User not found: " + email));
+    public EventResponseDTO createEvent(EventRequestDTO dto) {
+        User user = userRepository.findById(UUID.fromString(dto.getOrganizerId()))
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + dto.getOrganizerId()));
 
         Event event = new Event();
         event.setName(dto.getName());
@@ -97,7 +93,5 @@ public class EventServiceImpl implements EventService {
         return new EventResponseDTO(saved.getId(), saved.getName(),
                 saved.getStartingDate(), saved.getEndDate(), saved.getLocation());
     }
-
-
 
 }

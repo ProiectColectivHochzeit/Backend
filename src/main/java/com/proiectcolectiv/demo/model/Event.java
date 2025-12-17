@@ -1,9 +1,7 @@
 package com.proiectcolectiv.demo.model;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.FutureOrPresent;
-import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -28,7 +26,7 @@ public class Event {
     private String name;
 
     @Column(nullable = false)
-    @PastOrPresent
+    @FutureOrPresent
     private LocalDate startingDate;
 
     @Column(nullable = false)
