@@ -26,17 +26,13 @@ public class PhotoController {
             @RequestParam("eventId") String eventId,
             @RequestHeader(value = "Authorization", required = false) String authorization) {
         try {
-            System.out.println("Received photo upload request for eventId: " + eventId);
             UUID userId = extractUserIdFromToken(authorization);
             if (userId == null) {
-                System.out.println("Failed to extract userId from token");
                 return ResponseEntity.status(401).body(Map.of("error", "Unauthorized: Invalid or missing token"));
             }
-            System.out.println("Extracted userId: " + userId);
 
             UUID eventUUID = UUID.fromString(eventId);
             PhotoResponseDTO photo = photoService.uploadPhoto(file, eventUUID, userId);
-            System.out.println("Photo saved successfully with id: " + photo.getId());
             
             return ResponseEntity.ok(Map.of(
                     "id", photo.getId().toString(),
@@ -46,13 +42,10 @@ public class PhotoController {
                     "uploadedAt", photo.getUploadedAt().toString()
             ));
         } catch (IllegalArgumentException e) {
-            e.printStackTrace();
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         } catch (IOException e) {
-            e.printStackTrace();
             return ResponseEntity.status(500).body(Map.of("error", "Upload failed", "details", e.getMessage()));
         } catch (Exception e) {
-            e.printStackTrace();
             return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
         }
     }

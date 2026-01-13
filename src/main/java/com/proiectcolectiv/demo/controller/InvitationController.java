@@ -37,7 +37,6 @@ public class InvitationController {
             invitationService.declineInvitation(id);
             return ResponseEntity.ok().build();
         } catch (Exception e) {
-            e.printStackTrace();
             return ResponseEntity.status(500).body("Internal server error: " + e.getMessage());
         }
     }
@@ -72,8 +71,6 @@ public class InvitationController {
                 return ResponseEntity.status(400).body("User ID is required");
             }
             
-            System.out.println("Received accept invitation request: invitationId=" + acceptInvitationDTO.getInvitationId() + ", userId=" + acceptInvitationDTO.getInvitedUserId());
-            
             invitationService.acceptInvitation(acceptInvitationDTO);
             return ResponseEntity.ok().build();
         } catch (EventNotFoundException e) {
@@ -86,10 +83,8 @@ public class InvitationController {
             if (e.getMessage() != null && e.getMessage().contains("not found")) {
                 return ResponseEntity.status(404).body(e.getMessage());
             }
-            e.printStackTrace();
             return ResponseEntity.status(500).body("Internal server error: " + e.getMessage());
         } catch (Exception e) {
-            e.printStackTrace();
             return ResponseEntity.status(500).body("Internal server error: " + e.getMessage());
         }
     }

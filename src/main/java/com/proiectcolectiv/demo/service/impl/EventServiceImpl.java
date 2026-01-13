@@ -41,16 +41,12 @@ public class EventServiceImpl implements EventService {
         List<Event> organizedEvents = getAllEventsOrganizedByUserId(userId);
         List<Event> participatedEvents = getAllEventsParticipatedByUserId(userId);
         
-        System.out.println("User " + userId + " - Organized events: " + organizedEvents.size());
-        System.out.println("User " + userId + " - Participated events: " + participatedEvents.size());
-        
         // Combine and remove duplicates based on event ID
         Map<UUID, Event> eventMap = new java.util.HashMap<>();
         organizedEvents.forEach(e -> eventMap.put(e.getId(), e));
         participatedEvents.forEach(e -> eventMap.put(e.getId(), e));
         
         List<Event> allEvents = new java.util.ArrayList<>(eventMap.values());
-        System.out.println("User " + userId + " - Total unique events: " + allEvents.size());
         
         return allEvents;
     }
@@ -138,9 +134,6 @@ public class EventServiceImpl implements EventService {
     @Override
     public List<EventResponseDTO> getAllEventsByUserIdWithOrganizer(UUID userId) throws EventNotFoundException, EventOrganizerNotFoundException, EventParticipationNotFound {
         List<Event> events = getAllEventsByUserId(userId);
-        
-        System.out.println("Getting events for user " + userId + ": found " + events.size() + " events");
-        events.forEach(e -> System.out.println("  - Event: " + e.getName() + " (ID: " + e.getId() + ")"));
 
         if (events.isEmpty()) {
             return List.of();
