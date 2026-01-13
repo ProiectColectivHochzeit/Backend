@@ -1,0 +1,48 @@
+package com.proiectcolectiv.demo.service;
+
+
+import com.proiectcolectiv.demo.dto.Event.EventRequestDTO;
+import com.proiectcolectiv.demo.dto.Event.EventResponseDTO;
+import com.proiectcolectiv.demo.exception.event.EventNotFoundException;
+import com.proiectcolectiv.demo.exception.eventOrganizer.EventOrganizerNotFoundException;
+import com.proiectcolectiv.demo.exception.eventParticipation.EventParticipationNotFound;
+import com.proiectcolectiv.demo.model.Event;
+
+import java.util.List;
+import java.util.UUID;
+
+public interface EventService {
+    /**
+     * Retrieves all events from the repository for a specific user.
+     * @param userId the UUID of the user
+     * @throws EventNotFoundException if no events are found for the specified user
+     * @return List of Event objects associated with the specified user
+     */
+    List<Event> getAllEventsByUserId(UUID userId) throws EventNotFoundException, EventOrganizerNotFoundException, EventParticipationNotFound;
+
+    /**
+     * Retrieves all events with organizer information for a specific user.
+     * @param userId the UUID of the user
+     * @return List of EventResponseDTO with organizerID populated
+     */
+    List<EventResponseDTO> getAllEventsByUserIdWithOrganizer(UUID userId) throws EventNotFoundException, EventOrganizerNotFoundException, EventParticipationNotFound;
+
+    /**
+     * Retrieves a single event by its ID.
+     * @param eventId the UUID of the event
+     * @return the EventResponseDTO for the event
+     * @throws EventNotFoundException if the event is not found
+     */
+    EventResponseDTO getEventById(UUID eventId) throws EventNotFoundException;
+
+    /**
+     * Persists a new Event.
+     * Implementations should validate the provided {@code event} and persist it (for example via a repository).
+     *
+     * @param dto the Event to create; must not be {@code null}
+     * @return the persisted Event instance, typically with generated fields populated (e.g. id)
+     * @throws IllegalArgumentException if {@code event} is {@code null} or otherwise invalid
+     */
+    EventResponseDTO createEvent(EventRequestDTO dto);
+
+}
