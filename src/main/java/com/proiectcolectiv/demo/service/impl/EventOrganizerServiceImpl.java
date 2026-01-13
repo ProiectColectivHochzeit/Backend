@@ -1,7 +1,7 @@
 package com.proiectcolectiv.demo.service.impl;
 
-import com.proiectcolectiv.demo.exception.eventOrganizer.EventOrganizerNotFoundException;
 import com.proiectcolectiv.demo.model.EventOrganizer;
+import com.proiectcolectiv.demo.model.User;
 import com.proiectcolectiv.demo.repository.EventOrganizerRepository;
 import com.proiectcolectiv.demo.service.EventOrganizerService;
 import lombok.RequiredArgsConstructor;
@@ -17,12 +17,24 @@ public class EventOrganizerServiceImpl implements EventOrganizerService {
     private final EventOrganizerRepository eventOrganizerRepository;
 
     @Override
-    public List<EventOrganizer> getAllEventOrganizerByUserId(UUID userId) throws EventOrganizerNotFoundException {
-        List<EventOrganizer> eventOrganizerList =  eventOrganizerRepository.findAllByUserId(userId);
-        if (eventOrganizerList.isEmpty()) {
-            throw new EventOrganizerNotFoundException();
+    public List<EventOrganizer> getAllEventOrganizerByUserId(UUID userId) {
+        return eventOrganizerRepository.findAllByUserId(userId);
+    }
+
+    @Override
+    public List<User> getAllOrganizersForEvent(UUID eventId) {
+        return eventOrganizerRepository.findAllOrganizersForEvent(eventId);
+    }
+
+    @Override
+    public boolean isUserOrganizerOfEvent(UUID userId, UUID eventId){
+        List<User> organizers = getAllOrganizersForEvent(eventId);
+        for (User organizer : organizers) {
+            if (organizer.getId().equals(userId)) {
+                return true;
+            }
         }
-        return eventOrganizerList;
+        return false;
     }
 
     @Override

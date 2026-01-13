@@ -32,7 +32,5 @@ public class EventRequestDTO {
     private String location;
 
     @NotBlank
-    private String organizerID;
-
-    private String description;
+    private String organizerId;
 }

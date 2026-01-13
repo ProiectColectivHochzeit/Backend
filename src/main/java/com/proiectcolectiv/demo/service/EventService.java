@@ -37,12 +37,12 @@ public interface EventService {
 
     /**
      * Persists a new Event.
-     *
      * Implementations should validate the provided {@code event} and persist it (for example via a repository).
      *
      * @param dto the Event to create; must not be {@code null}
      * @return the persisted Event instance, typically with generated fields populated (e.g. id)
      * @throws IllegalArgumentException if {@code event} is {@code null} or otherwise invalid
      */
-    public EventResponseDTO createEvent(EventRequestDTO dto, String email);
+    EventResponseDTO createEvent(EventRequestDTO dto);
+
 }

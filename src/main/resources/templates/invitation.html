@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <title>Welcome</title>
+</head>
+<body>
+<p>You are invited to an amazing event hosted by
+    <span th:each="organizer, iter : ${eventOrganizers}">
+        <span th:text="${organizer}"></span><span th:if="${!iter.last}">, </span>
+    </span>
+    called "<span th:text="${eventName}"></span>".
+</p>
+
+<p><b>Event Details:</b></p>
+<ul>
+    <li><b>StartDate:</b> <span th:text="${eventStartDate}"></span></li>
+    <li><b>Location:</b> <span th:text="${eventEndDate}"></span></li>
+    <li><b>Venue: </b> <span th:text="${eventLocation}"></span></li>
+</ul>
+
+<p>You have until 10 days before the event to make a choice or else the invitation will be automatically declined</p>
+<img th:src = "'cid:' + ${morpheusCid}" alt="Choice" />
+<p><b>If you choose to accept the invitation click on the blue pill, if you choose to reject it click on the red pill</b></p>
+<table>
+    <tr>
+        <td>
+            <a th:href = "'http://localhost:4200/invitation-accept?invitationId=' + ${invitationId}">
+                <img th:src="'cid:' + ${bluePillCid}" alt="Accept Invitation" width="200px" height="200px"/>
+            </a>
+        </td>
+        <td>
+            <a th:href = "'http://localhost:4200/invitation-decline?invitationId=' + ${invitationId}">
+                <img th:src="'cid:' + ${redPillCid}" alt="Reject Invitation" width="200px" height="200px"/>
+            </a>
+        </td>
+    </tr>
+</table>
+</body>
+</html>
