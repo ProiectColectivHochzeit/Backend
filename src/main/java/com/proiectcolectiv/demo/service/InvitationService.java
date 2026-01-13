@@ -58,4 +58,10 @@ public interface InvitationService {
 
     // Validates if the invitation is still valid (not expired or already accepted/declined).
     boolean isValid(UUID id);
+
+    /**
+     * Deletes an invitation by its unique identifier.
+     * @param id the unique identifier of the invitation to be deleted
+     */
+    void deleteInvitation(UUID id);
 }

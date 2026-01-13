@@ -116,7 +116,8 @@ public class InvitationServiceImpl  implements InvitationService {
                                 userId,
                                 name,
                                 invitation.getGuestEmail(),
-                                invitation.getStatus()
+                                invitation.getStatus(),
+                                invitation.getId()
                         );
                         log.debug("Created DTO for invitation: email={}, status={}, name={}", 
                                 invitation.getGuestEmail(), invitation.getStatus(), name);
@@ -283,5 +284,17 @@ public class InvitationServiceImpl  implements InvitationService {
         invitation.setUser(user);
         invitationRepository.save(invitation);
         log.debug("Updated invitation {} user to {}", invitationId, user.getEmail());
+    }
+
+    @Override
+    @Transactional
+    public void deleteInvitation(UUID id) {
+        if (invitationRepository.existsById(id)) {
+            invitationRepository.deleteById(id);
+            log.info("Invitation {} deleted successfully", id);
+        } else {
+            log.warn("Invitation {} not found for deletion", id);
+            throw new RuntimeException("Invitation not found: " + id);
+        }
     }
 }

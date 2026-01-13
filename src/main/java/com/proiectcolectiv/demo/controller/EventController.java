@@ -12,7 +12,6 @@ import com.proiectcolectiv.demo.exception.eventParticipation.EventParticipationN
 import com.proiectcolectiv.demo.exception.user.UserNotFoundException;
 import com.proiectcolectiv.demo.mapper.EventMapper;
 import com.proiectcolectiv.demo.mapper.InvitationMapper;
-import com.proiectcolectiv.demo.model.Event;
 import com.proiectcolectiv.demo.model.Invitation;
 import com.proiectcolectiv.demo.service.EventOrganizerService;
 import com.proiectcolectiv.demo.service.EventService;
@@ -22,8 +21,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -39,6 +41,7 @@ public class EventController {
     private final InvitationService invitationService;
     private final EventOrganizerService eventOrganizerService;
     private final InvitationMapper invitationMapper;
+    private final com.proiectcolectiv.demo.service.ExcelImportService excelImportService;
 
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<EventResponseDTO>> getAllEventsByUserId(@PathVariable UUID userId) throws EventNotFoundException, EventParticipationNotFound, EventOrganizerNotFoundException {
@@ -143,6 +146,93 @@ public class EventController {
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(500).build();
+        }
+    }
+
+    @DeleteMapping("/{eventId}/invitations/{invitationId}")
+    public ResponseEntity<?> deleteInvitation(
+            @PathVariable String eventId,
+            @PathVariable String invitationId,
+            @RequestHeader(value = "Authorization", required = false) String authorization) {
+        try {
+            UUID userId = extractUserIdFromToken(authorization);
+            if (userId == null) {
+                return ResponseEntity.status(401).body(Map.of("error", "Unauthorized: Invalid or missing token"));
+            }
+
+            UUID invitationUUID = UUID.fromString(invitationId);
+            invitationService.deleteInvitation(invitationUUID);
+            return ResponseEntity.ok(Map.of("message", "Invitation deleted successfully"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/{eventId}/import-participants")
+    public ResponseEntity<?> importParticipantsFromExcel(
+            @PathVariable String eventId,
+            @RequestParam("file") MultipartFile file,
+            @RequestHeader(value = "Authorization", required = false) String authorization) {
+        try {
+            UUID userId = extractUserIdFromToken(authorization);
+            if (userId == null) {
+                return ResponseEntity.status(401).body(Map.of("error", "Unauthorized: Invalid or missing token"));
+            }
+
+            UUID eventUUID = UUID.fromString(eventId);
+            // Verify event exists (getEventById throws EventNotFoundException if not found)
+            try {
+                eventService.getEventById(eventUUID);
+            } catch (EventNotFoundException e) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Event not found"));
+            }
+
+            // Parse emails from Excel or CSV
+            List<String> emails = excelImportService.parseEmailsFromFile(file);
+            
+            // Create invitations for each email
+            Map<String, Object> result = new HashMap<>();
+            int successCount = 0;
+            int failureCount = 0;
+            List<String> failedEmails = new ArrayList<>();
+
+            for (String email : emails) {
+                try {
+                    InvitationRequestDTO invitationRequest = InvitationRequestDTO.builder()
+                            .eventId(eventId)
+                            .currentUserId(userId.toString())
+                            .guestEmail(email)
+                            .build();
+
+                    Invitation invitation = invitationMapper.invitationRequestDTOToInvitation(invitationRequest);
+                    invitationService.createInvitation(invitation);
+                    successCount++;
+                } catch (Exception e) {
+                    failureCount++;
+                    failedEmails.add(email);
+                    // Log but continue with other emails
+                }
+            }
+
+            result.put("message", "Import completed");
+            result.put("total", emails.size());
+            result.put("success", successCount);
+            result.put("failed", failureCount);
+            if (!failedEmails.isEmpty()) {
+                result.put("failedEmails", failedEmails);
+            }
+
+            return ResponseEntity.ok(result);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (EventNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Event not found"));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", e.getMessage()));
         }
     }
 
