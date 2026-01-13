@@ -2,13 +2,18 @@ package com.proiectcolectiv.demo.controller;
 
 import com.proiectcolectiv.demo.dto.Event.EventRequestDTO;
 import com.proiectcolectiv.demo.dto.Event.EventResponseDTO;
+import com.proiectcolectiv.demo.dto.invitation.InvitationRequestDTO;
+import com.proiectcolectiv.demo.dto.invitation.InvitationResponseDTO;
 import com.proiectcolectiv.demo.dto.photo.PhotoResponseDTO;
 import com.proiectcolectiv.demo.dto.user.InvitedUserResponseDTO;
 import com.proiectcolectiv.demo.exception.event.EventNotFoundException;
 import com.proiectcolectiv.demo.exception.eventOrganizer.EventOrganizerNotFoundException;
 import com.proiectcolectiv.demo.exception.eventParticipation.EventParticipationNotFound;
+import com.proiectcolectiv.demo.exception.user.UserNotFoundException;
 import com.proiectcolectiv.demo.mapper.EventMapper;
+import com.proiectcolectiv.demo.mapper.InvitationMapper;
 import com.proiectcolectiv.demo.model.Event;
+import com.proiectcolectiv.demo.model.Invitation;
 import com.proiectcolectiv.demo.service.EventOrganizerService;
 import com.proiectcolectiv.demo.service.EventService;
 import com.proiectcolectiv.demo.service.PhotoService;
@@ -18,7 +23,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Base64;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -31,6 +38,7 @@ public class EventController {
     private final PhotoService photoService;
     private final InvitationService invitationService;
     private final EventOrganizerService eventOrganizerService;
+    private final InvitationMapper invitationMapper;
 
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<EventResponseDTO>> getAllEventsByUserId(@PathVariable UUID userId) throws EventNotFoundException, EventParticipationNotFound, EventOrganizerNotFoundException {
@@ -54,10 +62,18 @@ public class EventController {
         }
     }
 
-    @GetMapping("/participants/{id}")
-    public ResponseEntity<List<InvitedUserResponseDTO>> getAllParticipantsByEventId(@PathVariable UUID id) throws EventNotFoundException {
-        List<InvitedUserResponseDTO> invitedParticipants = invitationService.getAllInvitedUsersByEvent(id);
-        return ResponseEntity.ok(invitedParticipants);
+    @GetMapping("/{eventId}/participants")
+    public ResponseEntity<List<InvitedUserResponseDTO>> getAllParticipantsByEventId(@PathVariable String eventId) {
+        try {
+            UUID eventUUID = UUID.fromString(eventId);
+            List<InvitedUserResponseDTO> invitedParticipants = invitationService.getAllInvitedUsersByEvent(eventUUID);
+            return ResponseEntity.ok(invitedParticipants);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).build();
+        }
     }
 
     @PostMapping
@@ -77,6 +93,45 @@ public class EventController {
         return ResponseEntity.ok(isOrganizer);
     }
 
+    @PostMapping("/{eventId}/invite")
+    public ResponseEntity<?> inviteParticipant(
+            @PathVariable String eventId,
+            @RequestBody Map<String, String> request,
+            @RequestHeader(value = "Authorization", required = false) String authorization) {
+        try {
+            UUID userId = extractUserIdFromToken(authorization);
+            if (userId == null) {
+                return ResponseEntity.status(401).body(Map.of("error", "Unauthorized: Invalid or missing token"));
+            }
+
+            String guestEmail = request.get("email");
+            if (guestEmail == null || guestEmail.isBlank()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Email is required"));
+            }
+
+            InvitationRequestDTO invitationRequest = InvitationRequestDTO.builder()
+                    .eventId(eventId)
+                    .currentUserId(userId.toString())
+                    .guestEmail(guestEmail)
+                    .build();
+
+            Invitation invitation = invitationMapper.invitationRequestDTOToInvitation(invitationRequest);
+            Invitation createdInvitation = invitationService.createInvitation(invitation);
+            InvitationResponseDTO responseDTO = invitationMapper.invitationToInvitationResponseDTO(createdInvitation);
+
+            return ResponseEntity.ok(responseDTO);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (EventNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Event not found"));
+        } catch (UserNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "User not found"));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", e.getMessage()));
+        }
+    }
+
     @GetMapping("/{eventId}/photos")
     public ResponseEntity<List<PhotoResponseDTO>> getPhotosByEventId(@PathVariable String eventId) {
         try {
@@ -88,6 +143,37 @@ public class EventController {
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(500).build();
+        }
+    }
+
+    private UUID extractUserIdFromToken(String authorization) {
+        if (authorization == null || !authorization.startsWith("Bearer ")) {
+            return null;
+        }
+
+        try {
+            String token = authorization.substring(7); // Remove "Bearer " prefix
+            String[] parts = token.split("\\.");
+            if (parts.length != 3) {
+                return null;
+            }
+
+            // Decode the payload (second part)
+            String payload = new String(Base64.getUrlDecoder().decode(parts[1]));
+            // Parse JSON to get "sub" claim
+            int subIndex = payload.indexOf("\"sub\":\"");
+            if (subIndex == -1) {
+                return null;
+            }
+            int startIndex = subIndex + 7;
+            int endIndex = payload.indexOf("\"", startIndex);
+            if (endIndex == -1) {
+                return null;
+            }
+            String userIdString = payload.substring(startIndex, endIndex);
+            return UUID.fromString(userIdString);
+        } catch (Exception e) {
+            return null;
         }
     }
 }
