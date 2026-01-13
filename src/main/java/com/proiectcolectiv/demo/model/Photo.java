@@ -1,6 +1,7 @@
 package com.proiectcolectiv.demo.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.PastOrPresent;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -24,9 +25,20 @@ public class Photo {
     @JoinColumn(name = "user_id")
     private User user;
 
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "event_id")
+    private Event event;
+
+    @Column(nullable = false)
+    @NotBlank(message = "Photo URL is required")
+    private String url;
+
+    @Column(nullable = false)
+    @NotBlank(message = "Public ID is required")
+    private String publicId;
+
     @Column(nullable = false)
     @PastOrPresent
     private LocalDate uploadedAt;
-
 
 }

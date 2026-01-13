@@ -26,6 +26,7 @@ public class EventOrganizerServiceImpl implements EventOrganizerService {
         return eventOrganizerRepository.findAllOrganizersForEvent(eventId);
     }
 
+    @Override
     public boolean isUserOrganizerOfEvent(UUID userId, UUID eventId){
         List<User> organizers = getAllOrganizersForEvent(eventId);
         for (User organizer : organizers) {

@@ -16,4 +16,5 @@ public class EventResponseDTO {
     private LocalDate startingDate;
     private LocalDate endDate;
     private String location;
+    private String organizerID;
 }

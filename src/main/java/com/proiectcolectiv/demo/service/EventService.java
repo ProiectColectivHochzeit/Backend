@@ -21,6 +21,21 @@ public interface EventService {
     List<Event> getAllEventsByUserId(UUID userId) throws EventNotFoundException, EventOrganizerNotFoundException, EventParticipationNotFound;
 
     /**
+     * Retrieves all events with organizer information for a specific user.
+     * @param userId the UUID of the user
+     * @return List of EventResponseDTO with organizerID populated
+     */
+    List<EventResponseDTO> getAllEventsByUserIdWithOrganizer(UUID userId) throws EventNotFoundException, EventOrganizerNotFoundException, EventParticipationNotFound;
+
+    /**
+     * Retrieves a single event by its ID.
+     * @param eventId the UUID of the event
+     * @return the EventResponseDTO for the event
+     * @throws EventNotFoundException if the event is not found
+     */
+    EventResponseDTO getEventById(UUID eventId) throws EventNotFoundException;
+
+    /**
      * Persists a new Event.
      * Implementations should validate the provided {@code event} and persist it (for example via a repository).
      *
@@ -30,12 +45,4 @@ public interface EventService {
      */
     EventResponseDTO createEvent(EventRequestDTO dto);
 
-    /**
-     * Retrieves an Event by its unique identifier.
-     *
-     * @param eventId the UUID of the Event to retrieve
-     * @return the Event with the specified ID
-     * @throws EventNotFoundException if no Event with the specified ID exists
-     */
-    Event getEventById(UUID eventId) throws EventNotFoundException;
 }

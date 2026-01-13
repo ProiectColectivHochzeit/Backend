@@ -2,6 +2,7 @@ package com.proiectcolectiv.demo.controller;
 
 import com.proiectcolectiv.demo.dto.Event.EventRequestDTO;
 import com.proiectcolectiv.demo.dto.Event.EventResponseDTO;
+import com.proiectcolectiv.demo.dto.photo.PhotoResponseDTO;
 import com.proiectcolectiv.demo.dto.user.InvitedUserResponseDTO;
 import com.proiectcolectiv.demo.exception.event.EventNotFoundException;
 import com.proiectcolectiv.demo.exception.eventOrganizer.EventOrganizerNotFoundException;
@@ -10,6 +11,7 @@ import com.proiectcolectiv.demo.mapper.EventMapper;
 import com.proiectcolectiv.demo.model.Event;
 import com.proiectcolectiv.demo.service.EventOrganizerService;
 import com.proiectcolectiv.demo.service.EventService;
+import com.proiectcolectiv.demo.service.PhotoService;
 import com.proiectcolectiv.demo.service.InvitationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -26,17 +28,30 @@ public class EventController {
 
     private final EventService eventService;
     private final EventMapper eventMapper;
+    private final PhotoService photoService;
     private final InvitationService invitationService;
     private final EventOrganizerService eventOrganizerService;
 
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<EventResponseDTO>> getAllEventsByUserId(@PathVariable UUID userId) throws EventNotFoundException, EventParticipationNotFound, EventOrganizerNotFoundException {
-        List<Event> events = eventService.getAllEventsByUserId(userId);
-        List<EventResponseDTO> eventResponseDTOs = events.stream()
-                .map(eventMapper::eventToEventResponseDTO)
-                .toList();
-
+        List<EventResponseDTO> eventResponseDTOs = eventService.getAllEventsByUserIdWithOrganizer(userId);
         return ResponseEntity.ok(eventResponseDTOs);
+    }
+
+    @GetMapping("/{eventId}")
+    public ResponseEntity<EventResponseDTO> getEventById(@PathVariable String eventId) {
+        try {
+            UUID eventUUID = UUID.fromString(eventId);
+            EventResponseDTO event = eventService.getEventById(eventUUID);
+            return ResponseEntity.ok(event);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        } catch (EventNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).build();
+        }
     }
 
     @GetMapping("/participants/{id}")
@@ -55,16 +70,24 @@ public class EventController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<EventResponseDTO> getEventById(@PathVariable UUID id) throws EventNotFoundException {
-        Event event = eventService.getEventById(id);
-        EventResponseDTO responseDTO = eventMapper.eventToEventResponseDTO(event);
-        return ResponseEntity.ok(responseDTO);
-    }
 
     @GetMapping("/isOrganizer/{userId}/{eventId}")
     public ResponseEntity<Boolean> isUserOrganizerOfEvent(@PathVariable UUID userId, @PathVariable UUID eventId) {
         boolean isOrganizer = eventOrganizerService.isUserOrganizerOfEvent(userId, eventId);
         return ResponseEntity.ok(isOrganizer);
+    }
+
+    @GetMapping("/{eventId}/photos")
+    public ResponseEntity<List<PhotoResponseDTO>> getPhotosByEventId(@PathVariable String eventId) {
+        try {
+            UUID eventUUID = UUID.fromString(eventId);
+            List<PhotoResponseDTO> photos = photoService.getPhotosByEventId(eventUUID);
+            return ResponseEntity.ok(photos);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).build();
+        }
     }
 }
