@@ -18,7 +18,12 @@ public class EventParticipationServiceImpl implements EventParticipationService 
 
     @Override
     public List<EventParticipation> getAllEventParticipationByUserId(UUID userId) throws EventParticipationNotFound {
-        return eventParticipationRepository.findAllByUserId(userId);
+        List<EventParticipation> participations = eventParticipationRepository.findAllByUserId(userId);
+        if (participations.isEmpty()) {
+            // Return empty list instead of throwing exception - user might not have any participations yet
+            return List.of();
+        }
+        return participations;
     }
 
     @Override

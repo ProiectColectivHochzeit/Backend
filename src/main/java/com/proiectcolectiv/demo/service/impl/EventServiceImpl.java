@@ -19,6 +19,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -37,10 +38,21 @@ public class EventServiceImpl implements EventService {
     private final UserRepository userRepository;
 
     public List<Event> getAllEventsByUserId(UUID userId) throws EventNotFoundException, EventOrganizerNotFoundException, EventParticipationNotFound {
-        return Stream.concat(
-                getAllEventsOrganizedByUserId(userId).stream(),
-                getAllEventsParticipatedByUserId(userId).stream()
-        ).toList();
+        List<Event> organizedEvents = getAllEventsOrganizedByUserId(userId);
+        List<Event> participatedEvents = getAllEventsParticipatedByUserId(userId);
+        
+        System.out.println("User " + userId + " - Organized events: " + organizedEvents.size());
+        System.out.println("User " + userId + " - Participated events: " + participatedEvents.size());
+        
+        // Combine and remove duplicates based on event ID
+        Map<UUID, Event> eventMap = new java.util.HashMap<>();
+        organizedEvents.forEach(e -> eventMap.put(e.getId(), e));
+        participatedEvents.forEach(e -> eventMap.put(e.getId(), e));
+        
+        List<Event> allEvents = new java.util.ArrayList<>(eventMap.values());
+        System.out.println("User " + userId + " - Total unique events: " + allEvents.size());
+        
+        return allEvents;
     }
 
     public List<Event> getAllEventsOrganizedByUserId(UUID userId) throws EventOrganizerNotFoundException {
@@ -53,12 +65,21 @@ public class EventServiceImpl implements EventService {
     }
 
     public List<Event> getAllEventsParticipatedByUserId(UUID userId) throws EventParticipationNotFound {
-        List<UUID> participatedEventIds = eventParticipationService.getAllEventParticipationByUserId(userId)
-                .stream()
-                .map(eventParticipation -> eventParticipation.getEvent().getId())
-                .toList();
+        try {
+            List<UUID> participatedEventIds = eventParticipationService.getAllEventParticipationByUserId(userId)
+                    .stream()
+                    .map(eventParticipation -> eventParticipation.getEvent().getId())
+                    .toList();
 
-        return eventRepository.findAllById(participatedEventIds);
+            if (participatedEventIds.isEmpty()) {
+                return List.of(); // Return empty list if no participations
+            }
+
+            return eventRepository.findAllById(participatedEventIds);
+        } catch (EventParticipationNotFound e) {
+            // If no participations found, return empty list instead of throwing
+            return List.of();
+        }
     }
 
 
@@ -117,6 +138,9 @@ public class EventServiceImpl implements EventService {
     @Override
     public List<EventResponseDTO> getAllEventsByUserIdWithOrganizer(UUID userId) throws EventNotFoundException, EventOrganizerNotFoundException, EventParticipationNotFound {
         List<Event> events = getAllEventsByUserId(userId);
+        
+        System.out.println("Getting events for user " + userId + ": found " + events.size() + " events");
+        events.forEach(e -> System.out.println("  - Event: " + e.getName() + " (ID: " + e.getId() + ")"));
 
         if (events.isEmpty()) {
             return List.of();

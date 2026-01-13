@@ -32,9 +32,14 @@ public class InvitationController {
     }
 
     @PostMapping("decline/{id}")
-    public ResponseEntity<Void> declineInvitation(@PathVariable("id") UUID id) {
-        invitationService.declineInvitation(id);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<?> declineInvitation(@PathVariable("id") UUID id) {
+        try {
+            invitationService.declineInvitation(id);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Internal server error: " + e.getMessage());
+        }
     }
 
     @PostMapping()
@@ -57,8 +62,35 @@ public class InvitationController {
     }
 
     @PostMapping("accept")
-    public ResponseEntity<Void> acceptInvitation(@RequestBody AcceptInvitationDTO acceptInvitationDTO) throws EventNotFoundException, UserNotFoundException {
-        invitationService.acceptInvitation(acceptInvitationDTO);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<?> acceptInvitation(@RequestBody AcceptInvitationDTO acceptInvitationDTO) {
+        try {
+            // Validate UUID format
+            if (acceptInvitationDTO.getInvitationId() == null) {
+                return ResponseEntity.status(400).body("Invitation ID is required");
+            }
+            if (acceptInvitationDTO.getInvitedUserId() == null) {
+                return ResponseEntity.status(400).body("User ID is required");
+            }
+            
+            System.out.println("Received accept invitation request: invitationId=" + acceptInvitationDTO.getInvitationId() + ", userId=" + acceptInvitationDTO.getInvitedUserId());
+            
+            invitationService.acceptInvitation(acceptInvitationDTO);
+            return ResponseEntity.ok().build();
+        } catch (EventNotFoundException e) {
+            return ResponseEntity.status(404).body("Event not found");
+        } catch (UserNotFoundException e) {
+            return ResponseEntity.status(404).body("User not found");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(400).body(e.getMessage());
+        } catch (RuntimeException e) {
+            if (e.getMessage() != null && e.getMessage().contains("not found")) {
+                return ResponseEntity.status(404).body(e.getMessage());
+            }
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Internal server error: " + e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Internal server error: " + e.getMessage());
+        }
     }
 }

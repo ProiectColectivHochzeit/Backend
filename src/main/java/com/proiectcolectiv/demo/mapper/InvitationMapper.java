@@ -26,12 +26,20 @@ public class InvitationMapper {
     private final EventRepository eventRepository;
 
     public Invitation invitationRequestDTOToInvitation(InvitationRequestDTO dto) throws UserNotFoundException, EventNotFoundException {
-        User user = null;
-        if (dto.getCurrentUserId() != null && !dto.getCurrentUserId().isBlank()) {
-            try {
-                user = userService.getUserById(UUID.fromString(dto.getCurrentUserId()));
-            } catch (IllegalArgumentException e) {
-                throw new UserNotFoundException();
+        // Try to find the invited user by email first
+        User invitedUser = null;
+        try {
+            invitedUser = userService.getUserByEmail(dto.getGuestEmail());
+        } catch (UserNotFoundException e) {
+            // User doesn't exist yet - this is OK, they'll be set when they accept
+            // For now, we need a placeholder user since the entity requires it
+            // We'll use the organizer as a temporary placeholder
+            if (dto.getCurrentUserId() != null && !dto.getCurrentUserId().isBlank()) {
+                try {
+                    invitedUser = userService.getUserById(UUID.fromString(dto.getCurrentUserId()));
+                } catch (IllegalArgumentException ex) {
+                    // If organizer not found, we'll need to handle this
+                }
             }
         }
 
@@ -44,7 +52,7 @@ public class InvitationMapper {
             throw new EventNotFoundException();
         }
 
-        return new Invitation(null, event, user, dto.getGuestEmail(), Status.PENDING);
+        return new Invitation(null, event, invitedUser, dto.getGuestEmail(), Status.PENDING);
     }
 
     public InvitationResponseDTO invitationToInvitationResponseDTO(Invitation invitation) {

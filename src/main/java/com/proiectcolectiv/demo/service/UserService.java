@@ -31,4 +31,12 @@ public interface UserService {
      * @return the User object with the specified ID
      */
     User getUserById(UUID id) throws UserNotFoundException;
+
+    /**
+     * Retrieves a user by their email address.
+     * @param email the email address of the user
+     * @throws UserNotFoundException if the user with the specified email is not found
+     * @return the User object with the specified email
+     */
+    User getUserByEmail(String email) throws UserNotFoundException;
 }
