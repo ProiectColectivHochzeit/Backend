@@ -36,4 +36,5 @@ public interface AuthService {
      */
     boolean validateToken(String token) throws InvalidTokenException;
 
+    void resetPassword(String email, String newPassword) throws UserNotFoundException;
 }
